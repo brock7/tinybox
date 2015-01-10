@@ -1,6 +1,6 @@
 #include <stdio.h>
-#include <Windows.h>  
-#include <TlHelp32.h>  
+#include <windows.h>  
+#include <tlhelp32.h>  
 
 int ps_main(int argc, char* argv[])  
 {  
