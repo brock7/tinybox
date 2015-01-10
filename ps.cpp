@@ -41,5 +41,15 @@ int kill_main(int argc, char* argv[])
 	}
 	
 	KillProcess(atoi(argv[1]));
+	return 0;
+}
+
+int whoami_main(int argc, char* argv[])
+{
+	char buf[1024];
+	DWORD l = sizeof(buf);
+	GetUserName(buf, &l);
+	printf("%s\n", buf);
+	return 0;
 }
 
