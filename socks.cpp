@@ -9,6 +9,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <assert.h>
+
 #ifdef WIN32
 #include <winsock2.h>
 #include <windows.h>
@@ -61,30 +63,31 @@ typedef void* LPVOID;
 #endif // #ifdef WIN32
 
 typedef pthread_mutex_t CRITICAL_SECTION;
-void InitializeCriticalSection(CRITICAL_SECTION* cs)
+static void InitializeCriticalSection(CRITICAL_SECTION* cs)
 {
 	pthread_mutexattr_t mta;
 	pthread_mutexattr_init(&mta);
 	pthread_mutexattr_settype(&mta, PTHREAD_MUTEX_RECURSIVE_NP);
 	if (pthread_mutex_init(cs, &mta) != 0) {
 
-		throw "SyncUtilInitFail()";
+		// throw "SyncUtilInitFail()";
+		assert(0);
 	}
 
 	pthread_mutexattr_destroy(&mta);
 }
 
-void DeleteCriticalSection(CRITICAL_SECTION* cs)
+static void DeleteCriticalSection(CRITICAL_SECTION* cs)
 {
 	 pthread_mutex_destroy(cs);
 }
 
-void EnterCriticalSection(CRITICAL_SECTION* cs)
+static void EnterCriticalSection(CRITICAL_SECTION* cs)
 {
 	pthread_mutex_lock(cs);
 }
 
-void LeaveCriticalSection(CRITICAL_SECTION* cs)
+static void LeaveCriticalSection(CRITICAL_SECTION* cs)
 {
 	pthread_mutex_unlock(cs);
 }
