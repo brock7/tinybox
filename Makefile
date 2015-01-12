@@ -23,9 +23,15 @@ socks.obj: socks.cpp
 ps.obj: ps.cpp
 	$(cc) $(cflags) ps.cpp
 
+scan.obj: scan.c
+	#(cc) $(cflags) scan.c
+
+reg.obj: reg.c
+	#(cc) $(cflags) reg.c
+
 tinybox.obj: tinybox.cpp
 	$(cc) $(cflags)	tinybox.cpp
 
-tinybox.exe: getopt.obj doexec.obj netcat.obj socks.obj ps.obj tinybox.obj
+tinybox.exe: getopt.obj doexec.obj netcat.obj socks.obj ps.obj scan.obj reg.obj tinybox.obj
     $(link) getopt.obj doexec.obj netcat.obj socks.obj ps.obj tinybox.obj $(lflags)
 

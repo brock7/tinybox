@@ -1,9 +1,9 @@
 
-cc=i586-mingw32msvc-gcc
-link=i586-mingw32msvc-gcc
+cc=i386-mingw32-gcc
+link=i386-mingw32-gcc
 
 cflags=-DWIN32 -DTELNET -DGAPING_SECURITY_HOLE -c
-lflags=-o tinybox_m.exe -lws2_32
+lflags=-o tinybox_m.exe -lws2_32 -lshlwapi
 
 all: tinybox_m.exe
 
@@ -22,9 +22,15 @@ socks.o: socks.cpp
 ps.o: ps.cpp
 	$(cc) $(cflags) ps.cpp
 
+scan.o: scan.c
+	$(cc) $(cflags) scan.c
+
+reg.o: reg.c
+	$(cc) $(cflags) reg.c
+
 tinybox.o: tinybox.cpp
 	$(cc) $(cflags)	tinybox.cpp
 
-tinybox_m.exe: getopt.o doexec.o netcat.o socks.o ps.o tinybox.o
-	$(link) getopt.o doexec.o netcat.o socks.o ps.o tinybox.o $(lflags)
+tinybox_m.exe: getopt.o doexec.o netcat.o socks.o ps.o scan.o reg.o tinybox.o
+	$(link) getopt.o doexec.o netcat.o socks.o ps.o scan.o reg.o tinybox.o $(lflags)
 
