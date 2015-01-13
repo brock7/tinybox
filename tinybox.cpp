@@ -6,6 +6,7 @@ int ps_main(int argc, char* argv[]);
 int kill_main(int argc, char* argv[]);
 int whoami_main(int argc, char* argv[]);
 extern "C" int reg_main(int argc, char* argv[]);
+extern "C" int scquery_main(int argc, char* argv[]);
 
 #endif
 extern "C" int nc_main(int argc, char* argv[]);
@@ -25,6 +26,7 @@ applet_desc applets[] = {
 	{"whoami", whoami_main, NULL},
 	{"kill", kill_main, NULL},
 	{"reg", reg_main, NULL}, 
+	{"scquery", scquery_main, NULL}, 
 #endif
 	{"nc", nc_main, NULL}, 
 	{"socks", socks_main, NULL},
