@@ -11,6 +11,7 @@ extern "C" int reg_main(int argc, char* argv[]);
 extern "C" int nc_main(int argc, char* argv[]);
 int socks_main(int argc, char* argv[]);
 extern "C" int scan_main(int argc, char* argv[]);
+extern "C" int exch_main(int argc, char* argv[]);
 
 typedef struct _applet_desc {
 	const char* name;
@@ -28,6 +29,7 @@ applet_desc applets[] = {
 	{"nc", nc_main, NULL}, 
 	{"socks", socks_main, NULL},
 	{"scan", scan_main, NULL}, 
+	{"exch", exch_main, NULL}, 
 };
 
 int main(int argc, char* argv[])

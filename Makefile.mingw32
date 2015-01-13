@@ -1,36 +1,20 @@
+ifndef PREFIX
+PREFIX=i386-mingw32-
+endif
 
-cc=i386-mingw32-gcc
-link=i386-mingw32-gcc
+CC=$(PREFIX)gcc
+CXX=$(PREFIX)g++
+STRIP=$(PREFIX)strip
+LD=$(CC)
 
-cflags=-DWIN32 -DTELNET -DGAPING_SECURITY_HOLE -c
-lflags=-o tinybox_m.exe -lws2_32 -lshlwapi
+CFLAGS:=-DWIN32 -DTELNET -DGAPING_SECURITY_HOLE -c
+LDFLAGS=-lws2_32 -lshlwapi
 
 all: tinybox_m.exe
 
-getopt.o: getopt.c
-	$(cc) $(cflags) getopt.c
+tinybox_m.exe: getopt.o doexec.o netcat.o socks.o ps.o scan.o reg.o exch.o tinybox.o
+	$(LD) $^ $(LDFLAGS) -o $@ 
+	$(STRIP) $@
 
-doexec.o: doexec.c
-	$(cc) $(cflags) doexec.c
-
-netcat.o: netcat.c
-	$(cc) $(cflags) netcat.c
-
-socks.o: socks.cpp
-	$(cc) $(cflags) socks.cpp
-
-ps.o: ps.cpp
-	$(cc) $(cflags) ps.cpp
-
-scan.o: scan.c
-	$(cc) $(cflags) scan.c
-
-reg.o: reg.c
-	$(cc) $(cflags) reg.c
-
-tinybox.o: tinybox.cpp
-	$(cc) $(cflags)	tinybox.cpp
-
-tinybox_m.exe: getopt.o doexec.o netcat.o socks.o ps.o scan.o reg.o tinybox.o
-	$(link) getopt.o doexec.o netcat.o socks.o ps.o scan.o reg.o tinybox.o $(lflags)
-
+clean:
+	-rm *.o tinybox_m.exe

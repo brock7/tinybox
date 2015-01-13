@@ -1,23 +1,9 @@
-cc=gcc
-link=gcc
-
-cflags=-DTELNET -DGAPING_SECURITY_HOLE -c
-lflags=-o tinybox -lpthread
+CFLAGS:=-DTELNET -DGAPING_SECURITY_HOLE -c
+LDFLAGS:=-o tinybox -lpthread
 
 all: tinybox
 
-netcat.o: netcat.c
-	$(cc) $(cflags) netcat.c
+tinybox: netcat.o scan.o socks.o  exch.o tinybox.o
 
-socks.o: socks.cpp
-	$(cc) $(cflags) socks.cpp
-
-scan.o: scan.c
-	$(cc) $(cflags) scan.c
-
-tinybox.o: tinybox.cpp
-	$(cc) $(cflags)	tinybox.cpp
-
-tinybox: netcat.o scan.o socks.o tinybox.o
-	$(link) netcat.o socks.o scan.o tinybox.o $(lflags)
-
+clean:
+	-rm *.o tinbox
