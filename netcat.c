@@ -1484,11 +1484,11 @@ static int readwrite (fd)
 		we create a expendable copy and give *that* to select.  *Fuck* me ... */
 		if (timer1)
 			memcpy (timer2, timer1, sizeof (struct timeval));
-//#ifdef WIN32 /* (weld)we must use our own small timeval to poll */
-		//rr = select (16, ding2, 0, 0, &timer3);	/* here it is, kiddies */
-//#else
+#ifdef WIN32 /* (weld)we must use our own small timeval to poll */
+		rr = select (16, ding2, 0, 0, &timer3);	/* here it is, kiddies */
+#else
 		rr = select (16, ding2, 0, 0, timer2);	/* here it is, kiddies */
-//#endif
+#endif
 		if (rr < 0) {
 #ifdef WIN32
 			if (h_errno != WSAEINTR) {		/* might have gotten ^Zed, etc ?*/
