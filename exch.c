@@ -358,6 +358,8 @@ void bind2bind(int port1, int port2)
         sock.fd2 = sockfd2;
 
 		ThreadDesc thread = SpawnThread((ThreadProc )transmitdata, (LPVOID)&sock);
+		// WaitThread(thread);
+		DestroyThread(thread);
 		/*
         hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)transmitdata, (LPVOID)&sock, 0, &dwThreadID);
         if(hThread == NULL)
@@ -445,6 +447,8 @@ void bind2conn(int port1, char *host, int port2)
         sock.fd2 = sockfd2;
 
 		ThreadDesc thread = SpawnThread((ThreadProc )transmitdata, (LPVOID)&sock);
+		// WaitThread(thread);
+		DestroyThread(thread);
         /*hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)transmitdata, (LPVOID)&sock, 0, &dwThreadID);
         if(hThread == NULL)
         {
@@ -468,10 +472,10 @@ void conn2conn(char *host1,int port1,char *host2,int port2)
 
     HANDLE hThread=NULL;
     transocket sock;
-    DWORD dwThreadID;
-    fd_set fds;
-    int l;
-    char buffer[MAXSIZE];
+    // DWORD dwThreadID;
+    // fd_set fds;
+    // int l;
+    // char buffer[MAXSIZE];
 
     while(1)
     {
@@ -505,6 +509,7 @@ void conn2conn(char *host1,int port1,char *host2,int port2)
 
         // fix by bkbll
         // if host1:port1 recved data, than connect to host2,port2
+		/*
         l=0;
         memset(buffer,0,MAXSIZE);
         while(1)
@@ -530,6 +535,7 @@ void conn2conn(char *host1,int port1,char *host2,int port2)
             printf("[-] There is a error...Create a new connection.\r\n");
             continue;
         }
+		*/
         while(1)
         {
             printf("[+] Connect OK!\r\n");
@@ -542,14 +548,15 @@ void conn2conn(char *host1,int port1,char *host2,int port2)
                   continue;
             }
 
+			/*
             if(send(sockfd2,buffer,l,0)==SOCKET_ERROR)
             {
                 printf("[-] Send failed.\r\n");
                 continue;
             }
 
-            l=0;
-            memset(buffer,0,MAXSIZE);
+            l=0;*/
+            //memset(buffer,0,MAXSIZE);
             break;
         }
 
@@ -567,11 +574,12 @@ void conn2conn(char *host1,int port1,char *host2,int port2)
         }
 		*/
 		ThreadDesc thread = SpawnThread((ThreadProc )transmitdata, (LPVOID)&sock);
-
+        printf("[+] CreateThread OK!\r\n\n");
+		WaitThread(thread);
+		DestroyThread(thread);
 //        connectnum++;
 
         Sleep(1000);
-        printf("[+] CreateThread OK!\r\n\n");
     }
 }
 
@@ -773,7 +781,7 @@ void transmitdata(LPVOID data)
                 memset(send_out2,0,MAXSIZE);
         }
 
-        Sleep(5);
+        // Sleep(5);
     }
 
     closesocket(fd1);

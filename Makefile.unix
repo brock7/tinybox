@@ -3,7 +3,7 @@ LDFLAGS:=-o tinybox -lpthread
 
 all: tinybox
 
-tinybox: netcat.o scan.o socks.o  exch2.o tinybox.o
+tinybox: netcat.o scan.o socks.o  exch.o tinybox.o
 
 clean:
 	-rm *.o tinbox
