@@ -11,12 +11,13 @@
  * Allow calling of 2 options e.g.:
  *    type= driver state= inactive
  */
-
+#include <tchar.h>
+#include <windows.h>
+#include <winnt.h>
 #include <stdarg.h>
 #include <windef.h>
 #include <winbase.h>
 #include <winsvc.h>
-#include <tchar.h>
 
 LPTSTR QueryOpts[] = {
     _T("type="),

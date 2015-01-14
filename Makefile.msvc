@@ -1,37 +1,42 @@
 
-cc=cl
+#cc=cl
 link=link
 
-cflags=/nologo /ML /W3 /GX /O2 /Zd /D "NDEBUG" /D "WIN32" /D "_CONSOLE" /D "TELNET" /D "GAPING_SECURITY_HOLE" /YX /FD /c 
+CFLAGS=/nologo /ML /W3 /GX /O2 /ZD /D "NDEBUG" /D "WIN32" /D "_CONSOLE" /D "TELNET" /D "GAPING_SECURITY_HOLE" /YX /FD
+CPPFLAGS=$(CFLAGS)
 #lflags=kernel32.lib user32.lib wsock32.lib winmm.lib /nologo /subsystem:console /incremental:yes /machine:I386 /debug /out:tinybox.exe /PDB:tinybox.pdb
-lflags=kernel32.lib user32.lib wsock32.lib winmm.lib /nologo /subsystem:console /incremental:yes /machine:I386 /out:tinybox.exe
+LFLAGS=kernel32.lib user32.lib wsock32.lib winmm.lib advapi32.lib shlwapi.lib /nologo /subsystem:console /incremental:yes /machine:I386 /out:tinybox.exe
 
 all: tinybox.exe
 
-getopt.obj: getopt.c
-    $(cc) $(cflags) getopt.c
+#getopt.obj: getopt.c
+#    $(cc) $(cflags) getopt.c
+#
+#doexec.obj: doexec.c
+#    $(cc) $(cflags) doexec.c
+#
+#netcat.obj: netcat.c
+#    $(cc) $(cflags) netcat.c
+#
+#socks.obj: socks.cpp
+#	$(cc) $(cflags) socks.cpp
+#
+#ps.obj: ps.cpp
+#	$(cc) $(cflags) ps.cpp
+#
+#scan.obj: scan.c
+#	#(cc) $(cflags) scan.c
+#
+#reg.obj: reg.c
+#	#(cc) $(cflags) reg.c
+#
+#tinybox.obj: tinybox.cpp
+#	$(cc) $(cflags)	tinybox.cpp
 
-doexec.obj: doexec.c
-    $(cc) $(cflags) doexec.c
+objs = getopt.obj doexec.obj netcat.obj socks.obj ps.obj scan.obj reg.obj exch.obj scquery.obj tinybox.obj
+tinybox.exe: $(objs)
+	$(link) $(objs) $(LFLAGS)
 
-netcat.obj: netcat.c
-    $(cc) $(cflags) netcat.c
-
-socks.obj: socks.cpp
-	$(cc) $(cflags) socks.cpp
-
-ps.obj: ps.cpp
-	$(cc) $(cflags) ps.cpp
-
-scan.obj: scan.c
-	#(cc) $(cflags) scan.c
-
-reg.obj: reg.c
-	#(cc) $(cflags) reg.c
-
-tinybox.obj: tinybox.cpp
-	$(cc) $(cflags)	tinybox.cpp
-
-tinybox.exe: getopt.obj doexec.obj netcat.obj socks.obj ps.obj scan.obj reg.obj tinybox.obj
-    $(link) getopt.obj doexec.obj netcat.obj socks.obj ps.obj tinybox.obj $(lflags)
-
+clean:
+	-del *.obj tinybox.exe
+	
