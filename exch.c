@@ -35,7 +35,7 @@
 #include <string.h>
 #include <errno.h>
 #include <signal.h>
-
+#include <assert.h>
 
 #ifdef WIN32
 #include <io.h>
@@ -111,13 +111,47 @@ void Sleep(long n)
 {
 	usleep(n * 1000);
 }
+
+#ifndef PTHREAD_MUTEX_RECURSIVE_NP
+#define PTHREAD_MUTEX_RECURSIVE_NP PTHREAD_MUTEX_RECURSIVE
+#endif // #ifdef WIN32
+
+typedef pthread_mutex_t CRITICAL_SECTION;
+static void InitializeCriticalSection(CRITICAL_SECTION* cs)
+{
+	pthread_mutexattr_t mta;
+	pthread_mutexattr_init(&mta);
+	pthread_mutexattr_settype(&mta, PTHREAD_MUTEX_RECURSIVE_NP);
+	if (pthread_mutex_init(cs, &mta) != 0) {
+
+		// throw "SyncUtilInitFail()";
+		assert(0);
+	}
+
+	pthread_mutexattr_destroy(&mta);
+}
+
+static void DeleteCriticalSection(CRITICAL_SECTION* cs)
+{
+	pthread_mutex_destroy(cs);
+}
+
+static void EnterCriticalSection(CRITICAL_SECTION* cs)
+{
+	pthread_mutex_lock(cs);
+}
+
+static void LeaveCriticalSection(CRITICAL_SECTION* cs)
+{
+	pthread_mutex_unlock(cs);
+}
 #endif
 
 #define VERSION                "1.00"
 #define TIMEOUT                300
 #define MAXSIZE                20480
 #define HOSTLEN                40
-#define CONNECTNUM            5
+#define CONNECTNUM             32
 
 // define 2 socket struct
 typedef struct _transocket
@@ -145,7 +179,8 @@ int client_connect(int sockfd, char* server, int port);
 // define GLOBAL variable here
 FILE *fp;
 int method=0;
-//int connectnum=0;
+volatile int connectnum=0;
+CRITICAL_SECTION cs;
 
 //************************************************************************************
 //
@@ -159,6 +194,7 @@ int exch_main(int argc, char* argv[])
     int iConnectPort=0, iTransmitPort=0;
     char *logfile=NULL;
 
+	InitializeCriticalSection(&cs);
     ver();
     memset(sConnectHost, 0, HOSTLEN);
     memset(sTransmitHost, 0, HOSTLEN);
@@ -251,6 +287,8 @@ int exch_main(int argc, char* argv[])
     {
         closeallfd();
     }
+
+	DeleteCriticalSection(&cs);
 #ifdef WIN32
     WSACleanup();
 #endif
@@ -479,6 +517,9 @@ void conn2conn(char *host1,int port1,char *host2,int port2)
 
     while(1)
     {
+		while (connectnum >= CONNECTNUM) {
+			Sleep(15);
+		}
 /*
         while(connectnum)
         {
@@ -575,7 +616,7 @@ void conn2conn(char *host1,int port1,char *host2,int port2)
 		*/
 		ThreadDesc thread = SpawnThread((ThreadProc )transmitdata, (LPVOID)&sock);
         printf("[+] CreateThread OK!\r\n\n");
-		WaitThread(thread);
+		// WaitThread(thread);
 		DestroyThread(thread);
 //        connectnum++;
 
@@ -606,6 +647,10 @@ void transmitdata(LPVOID data)
     char host1[20],host2[20];
     int port1=0,port2=0;
     char tmpbuf[100];
+
+	EnterCriticalSection(&cs);
+	connectnum ++;
+	LeaveCriticalSection(&cs);
 
     sock = (transocket *)data;
     fd1 = sock->fd1;
@@ -788,9 +833,71 @@ void transmitdata(LPVOID data)
     closesocket(fd2);
 //    if(method == 3)
 //        connectnum --;
+	EnterCriticalSection(&cs);
+	connectnum --;
+	LeaveCriticalSection(&cs);
 
-    printf("\r\n[+] OK! I Closed The Two Socket.\r\n");
+    printf("\r\n[+] OK! I Closed The Two Socket. connection count: %d\r\n", connectnum);
 }
+
+#if 0
+void transmitdata(LPVOID data)
+{
+    SOCKET fd1, fd2, maxfd;
+    transocket *sock;
+    struct timeval timeset;
+    fd_set readfd;
+    int result, rr;
+	char buf[8192];
+    struct sockaddr_in client1,client2;
+	int exitflag = 0;
+
+    sock = (transocket *)data;
+    fd1 = sock->fd1;
+    fd2 = sock->fd2;
+
+    timeset.tv_sec = TIMEOUT;
+    timeset.tv_usec = 0;
+
+	maxfd = max(fd1, fd2);
+	
+
+    while (1) {
+        FD_ZERO(&readfd);
+
+        FD_SET(fd1, &readfd);
+        FD_SET(fd2, &readfd);
+
+        result = select(maxfd + 1, &readfd, NULL, NULL,&timeset);
+		if (result <= 0) {
+			// error
+			break;
+		}
+		
+		if (FD_ISSET(fd1, &readfd)) {
+			rr = recv(fd1, buf, sizeof(buf), 0);
+			if (rr <= 0)
+				exitflag = 1;
+			else
+				send(fd2, buf, rr, 0);	
+		}
+
+		if (FD_ISSET(fd2, &readfd)) {
+			rr = recv(fd2, buf, sizeof(buf), 0);
+			if (rr <= 0)
+				exitflag = 1;
+			else
+				send(fd1, buf, rr, 0);			
+		}
+
+		if (exitflag)
+			break;
+	}
+
+	closesocket(fd1);
+	closesocket(fd2);
+}
+#endif
 
 void getctrlc(int j)
 {
