@@ -49,6 +49,7 @@ int is_processing(int fd, int ret)
 	return WSAGetLastError() ==  WSAEWOULDBLOCK;
 }
 
+#ifndef _MSC_VER
 int inet_pton(int af, const char *src, void *dst)
 {
 	struct sockaddr_storage ss;
@@ -72,6 +73,7 @@ int inet_pton(int af, const char *src, void *dst)
 	}
 	return 0;
 }
+#endif
 
 #if 0
 const char *inet_ntop(int af, const void *src, char *dst, socklen_t size)
@@ -204,5 +206,6 @@ int scan_main(int argc, char *argv[])
 	costtime = (float)(end_time - start_time) / 10000;
 	printf("Cost time:%f second\n", costtime);
 	platform_cleanup();
+	return 0;
 }
 

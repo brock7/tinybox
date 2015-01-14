@@ -193,6 +193,11 @@ int exch_main(int argc, char* argv[])
     char sConnectHost[HOSTLEN], sTransmitHost[HOSTLEN];
     int iConnectPort=0, iTransmitPort=0;
     char *logfile=NULL;
+#ifdef WIN32
+    // Win Start Winsock.
+    WSADATA wsadata;
+    WSAStartup(MAKEWORD(1, 1), &wsadata);
+#endif
 
 	InitializeCriticalSection(&cs);
     ver();
@@ -231,12 +236,6 @@ int exch_main(int argc, char* argv[])
 
         makelog("====== Start ======\r\n", 22);
     }
-
-#ifdef WIN32
-    // Win Start Winsock.
-    WSADATA wsadata;
-    WSAStartup(MAKEWORD(1, 1), &wsadata);
-#endif
 
     signal(SIGINT, &getctrlc);
 
@@ -347,6 +346,7 @@ void bind2bind(int port1, int port2)
     HANDLE hThread=NULL;
     transocket sock;
     DWORD dwThreadID;
+	ThreadDesc thread;
 
     if((fd1=create_socket())==0) return;
     if((fd2=create_socket())==0) return;
@@ -395,7 +395,7 @@ void bind2bind(int port1, int port2)
         sock.fd1 = sockfd1;
         sock.fd2 = sockfd2;
 
-		ThreadDesc thread = SpawnThread((ThreadProc )transmitdata, (LPVOID)&sock);
+		thread = SpawnThread((ThreadProc )transmitdata, (LPVOID)&sock);
 		// WaitThread(thread);
 		DestroyThread(thread);
 		/*
@@ -426,7 +426,8 @@ void bind2conn(int port1, char *host, int port2)
     HANDLE hThread=NULL;
     transocket sock;
     DWORD dwThreadID;
-
+	ThreadDesc thread;
+	
     if (port1 > 65535 || port1 < 1)
     {
         printf("[-] ConnectPort invalid.\r\n");
@@ -484,7 +485,7 @@ void bind2conn(int port1, char *host, int port2)
         sock.fd1 = sockfd1;
         sock.fd2 = sockfd2;
 
-		ThreadDesc thread = SpawnThread((ThreadProc )transmitdata, (LPVOID)&sock);
+		thread = SpawnThread((ThreadProc )transmitdata, (LPVOID)&sock);
 		// WaitThread(thread);
 		DestroyThread(thread);
         /*hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)transmitdata, (LPVOID)&sock, 0, &dwThreadID);
@@ -514,7 +515,7 @@ void conn2conn(char *host1,int port1,char *host2,int port2)
     // fd_set fds;
     // int l;
     // char buffer[MAXSIZE];
-
+	ThreadDesc thread; 
     while(1)
     {
 		while (connectnum >= CONNECTNUM) {
@@ -614,7 +615,7 @@ void conn2conn(char *host1,int port1,char *host2,int port2)
             return;
         }
 		*/
-		ThreadDesc thread = SpawnThread((ThreadProc )transmitdata, (LPVOID)&sock);
+		thread = SpawnThread((ThreadProc )transmitdata, (LPVOID)&sock);
         printf("[+] CreateThread OK!\r\n\n");
 		// WaitThread(thread);
 		DestroyThread(thread);

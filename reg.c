@@ -16,6 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <windows.h>
+#include <winnt.h>
 #include <stdarg.h>
 #include <windef.h>
 #include <winbase.h>
@@ -35,7 +37,7 @@ static int reg_printfW(const WCHAR *msg, ...)
     WCHAR msg_buffer[8192];
 
     va_start(va_args, msg);
-    vsnwprintf(msg_buffer, 8192, msg, va_args);
+    _vsnwprintf(msg_buffer, 8192, msg, va_args);
     va_end(va_args);
 
     wlen = lstrlenW(msg_buffer);
@@ -522,6 +524,14 @@ int reg_wmain(int argc, WCHAR *argvW[])
     }
 }
 
+#ifdef _MSC_VER
+int reg_main(int _argc, char** _argv)
+{
+	return reg_wmain(__argc - 1, &__wargv[1]);
+}
+
+#else
+
 #include <wchar.h>
 #include <stdlib.h>
 
@@ -539,5 +549,4 @@ int reg_main(int _argc, char** _argv)
 	__wgetmainargs(&argc, &argv, &enpv, _CRT_glob, &si); // this also creates the global variable __wargv
 	return reg_wmain(argc - 1, &argv[1]);
 }
-
-
+#endif
