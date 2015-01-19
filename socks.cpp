@@ -11,6 +11,10 @@
 #include <errno.h>
 #include <assert.h>
 
+#ifndef max
+#define max(a, b)		( (a) > (b) ? (a) : (b) )
+#endif
+
 #ifdef WIN32
 #include <winsock2.h>
 #include <windows.h>
@@ -123,7 +127,6 @@ void Sleep(long n)
 	usleep(n * 1000);
 }
 
-#define max(a, b)		( (a) > (b) ? (a) : (b) )
 #endif
 
 #define MAX_HOSTNAME 256

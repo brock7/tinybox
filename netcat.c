@@ -31,6 +31,7 @@ backend progs to grab a pty and look like a real telnetd?!
 */
 
 #ifdef __MINGW32__
+#define _WIN32_WINNT 0x0500
 #include <_mingw.h>
 #include <winsock2.h>
 #endif
@@ -1578,6 +1579,13 @@ static int readwrite (fd)
 			if (rr <= 0) {			/* at end, or fukt, or ... */
 				FD_CLR (0, ding1);		/* disable and close stdin */
 				close (0);
+				static int f = 0;
+				if (f == 0) {
+					if (o_verbose) {
+						holler ("stdin closed");
+					}
+					f = 1;
+				}
 			} else {
 				rzleft = rr;
 				zp = (unsigned char*)bigbuf_in;
@@ -1612,6 +1620,14 @@ static int readwrite (fd)
 			/* (weld) this is gonna block until a <cr> so it kinda sucks */
 			rr = read (0, bigbuf_in, BIGSIZ);
 			if (rr <= 0) {			/* at end, or fukt, or ... */
+				static int f = 0;
+				if (f == 0) {
+					if (o_verbose) {
+						holler ("stdin closed");
+					}
+					f = 1;
+				}
+
 				// do nothing
 				// close (0);
 				
