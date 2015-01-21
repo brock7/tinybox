@@ -1505,6 +1505,8 @@ static int readwrite (fd)
 #endif
 				return (1);
 			}
+
+			continue;
 		} /* select fuckup */
 		/* if we have a timeout AND stdin is closed AND we haven't heard anything
 		from the net during that time, assume it's dead and close it too. */
@@ -1779,6 +1781,14 @@ static void __w32_shutdown(void)
 }
 #endif
 
+void sigint_handler(int signo)
+{
+	int answer;
+	printf("Do you want to quit?(Y/N)");
+	answer = getchar();
+	if (answer == 'Y' || answer == 'y')
+		exit(0);
+}
 /* main :
 now we pull it all together... */
 int nc_main (argc, argv)
@@ -1804,6 +1814,7 @@ int nc_main (argc, argv)
 	char * randports = NULL;
 	int cycle = 0;
 
+	signal(SIGINT, sigint_handler);
 #ifdef WIN32
 	atexit(__w32_shutdown);
 	w32_stdout = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -1958,9 +1969,6 @@ recycle:
 #endif
 		case 'i':				/* line-interval time */
 			o_interval = atoi (optarg) & 0xffff;
-#ifdef WIN32
-			o_interval *= 1000;
-#endif
 			if (! o_interval)
 				bail ("invalid interval time %s", optarg);
 			break;
