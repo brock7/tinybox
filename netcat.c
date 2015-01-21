@@ -1860,6 +1860,18 @@ int nc_main (argc, argv)
 
 recycle:
 	optind = 1;
+
+	whereto = NULL;
+	wherefrom = NULL;
+	ouraddr = NULL;
+	themaddr = NULL;
+	o_lport = 0;
+	ourport = 0;
+	loport = 0;		/* for scanning stuff */
+	hiport = 0;
+	curport = 0;
+	randports = NULL;
+
 #if 0
 	/* if no args given at all, get 'em from stdin and construct an argv. */
 	if (argc == 1) {
@@ -1923,6 +1935,7 @@ recycle:
 			o_listen++;
 			o_keepalive = cycle = 1;
 			o_lport = getportpoop (optarg, 0);
+			o_interval = 30;
 			if (o_lport == 0)
 				bail ("invalid local port %s", optarg);
 			break;
@@ -2218,7 +2231,20 @@ recycle:
 	if (o_verbose > 1)		/* normally we don't care */
 		holler ("sent %d, rcvd %d", wrote_net, wrote_out);
 
-	free(randports);
+	if (randports != NULL) {
+		free(randports);
+		randports = NULL;
+	}
+
+	if (whereto != NULL) {
+		free(whereto);
+		whereto = NULL;
+	}
+
+	if (wherefrom != NULL) {
+		free(wherefrom);
+		wherefrom = NULL;
+	}
 
 	if (cycle == 1)
 		goto recycle;
