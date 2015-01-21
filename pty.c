@@ -8,7 +8,8 @@
 #include <sys/ioctl.h>
 // #include <sys/types.h>
 #include <sys/select.h>
-
+#include <pty.h>
+#if 0
 int openpty(int *amaster, int *aslave, char *name,
 		struct termios *termp, struct winsize *winp)
 {
@@ -51,6 +52,7 @@ err:
 	close(mfd);
 	return -1;
 } 
+#endif
 
 int main(int argc, int argv[])
 {
@@ -62,6 +64,7 @@ int main(int argc, int argv[])
 	int rr;
 	char* args[] = { "/bin/bash", "-i",};
 
+	// may forkpty is a better way
 	if (openpty(&master, &pty, ptyname, NULL, NULL) < 0) {
 		perror("cannot open pty - ");
 		return -1;

@@ -403,7 +403,6 @@ static VOID
 		holler("SessionReadShellThreadFn exitted, error = %s", 
 		itoa(GetLastError(), smbuff, 10), NULL, NULL, NULL, NULL, NULL);
 
-	Sleep(100);
 	ExitThread(0);
 }
 
@@ -457,7 +456,6 @@ static VOID
 		}
 	}
 
-	Sleep(100);
 	ExitThread(0);
 }
 
