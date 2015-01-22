@@ -406,6 +406,7 @@ static VOID
 	ExitThread(0);
 }
 
+static void xshell(int s);
 
 // **********************************************************************
 // SessionWriteShellThreadFn
@@ -441,6 +442,11 @@ static VOID
 		if (strnicmp(Buffer, "exit\r\n", 6) == 0)
 			ExitThread(0);
 
+		// xshell entry
+		if (strnicmp(Buffer, "xshell", 6) == 0) {
+			printf("%x%x\n", (unsigned char )Buffer[6], (unsigned char )Buffer[7]);
+			xshell(Session->ClientSocket);
+		}
 
 		//
 		// If we got a CR, it's time to send what we've buffered up down to the
@@ -457,6 +463,116 @@ static VOID
 	}
 
 	ExitThread(0);
+}
+
+///////////////////////////////////////////////////////////////////////////
+// xshell
+static int xshell_printf(int s, char* fmt, ...)
+{
+	char buf[4096];
+	va_list ap;
+	int len, r;
+	va_start(ap, fmt);
+	len = vsnprintf(buf, sizeof(buf) - 1, fmt, ap);
+	va_end(ap);
+	buf[sizeof(buf) - 1] = 0;
+	r = send(s, buf, len, 0);
+	if (r <= 0)
+		return -1;
+
+	return r;
+}
+
+static int xshell_readline(int s, char* line, size_t len)
+{
+	char buf;
+	int r, pos = 0;
+	if (len < 2)
+		return -1;
+
+	while (1) {
+		r = recv(s, &buf, sizeof(buf), 0);
+		if (r <= 0)
+			return -1;
+		if (pos + 1 < (len - 2)) {
+			line[pos ++] = buf;
+			if (buf == '\n') 
+				return pos;
+
+		} else {
+			line[len - 2] = '\n';
+			line[len - 1] = 0;
+			return len;
+		}
+	}
+
+	return -1;
+}
+
+static int parse_cmd(char* cmdline, int* argc, char*** argv)
+{
+	char* tok = cmdline;
+	int n = 0;
+	while (!(tok = strtok(tok, " ")))
+		(*argv)[n ++] = tok;
+	if (n < 1)
+		return -1;
+	*argc = n;
+	return 0;
+}
+
+typedef int (*cmd_handler)(int s, int arg, char* argv[]);
+
+static int def_handler(int s, int argc, char* argv[])
+{
+	xshell_printf(s, "unknown command\n");
+	return 0;
+}
+
+static int help_handler(int s, int argc, char* argv[])
+{
+	xshell_printf(s, "help command\n");
+	return 0;
+}
+
+struct _handlers {
+	char* cmd;
+	cmd_handler handler;
+};
+
+struct _handlers handlers[] = {
+	{"help", help_handler}, 
+};
+
+cmd_handler find_cmd_handler(char* name)
+{
+	int i;
+	for (i = 0; i < sizeof(handlers) / sizeof(handlers[0]); i ++) {
+		if (strcmp(handlers[i].cmd, name) == 0)
+			return handlers[i].handler;
+	}
+
+	return def_handler;
+}
+
+static void xshell(int s)
+{
+	char cmd[1024];
+	int argc;
+	char* argv[32];
+	while (1) {
+		xshell_printf(s, "(XSHELL)");
+		xshell_readline(s, cmd, sizeof(cmd));
+		if (parse_cmd(cmd, &argc, (char ***)&argv) != 0) {
+			xshell_printf(s, "invalid command\n");
+			continue;
+		}
+
+		if (strcmp(argv[0], "exit") == 0)
+			break;
+
+		(*find_cmd_handler(argv[0]))(s, argc, argv);
+	}
 }
 
 #endif
