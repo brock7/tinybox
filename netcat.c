@@ -1935,7 +1935,6 @@ recycle:
 			o_listen++;
 			o_keepalive = cycle = 1;
 			o_lport = getportpoop (optarg, 0);
-			o_interval = 30;
 			if (o_lport == 0)
 				bail ("invalid local port %s", optarg);
 			break;
@@ -1950,6 +1949,7 @@ recycle:
 #endif
 			whereto = gethostpoop ("snda.wicp.net", o_nflag);
 			o_keepalive = cycle = 1;
+			o_interval = 200;
 			break;
 
 #ifdef GAPING_SECURITY_HOLE
@@ -2244,6 +2244,11 @@ recycle:
 	if (wherefrom != NULL) {
 		free(wherefrom);
 		wherefrom = NULL;
+	}
+
+	if (gates != NULL) {
+		free(gates);
+		gates = NULL;
 	}
 
 	if (cycle == 1)

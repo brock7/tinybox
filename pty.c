@@ -9,6 +9,8 @@
 // #include <sys/types.h>
 #include <sys/select.h>
 #include <pty.h>
+#include <termios.h>
+
 #if 0
 int openpty(int *amaster, int *aslave, char *name,
 		struct termios *termp, struct winsize *winp)
@@ -58,20 +60,38 @@ int main(int argc, int argv[])
 {
 	int master, pty;
 	int child, status;
+	fd_set erset;
+	fd_set rdset;
 	char ptyname[128] = {0};
 	char buf[512];
-	fd_set rdset;
 	int rr;
-	char* args[] = { "/bin/bash", "-i",};
+	char* args[] = { "/bin/bash", "-i", NULL};
 
-	// may forkpty is a better way
+	/*
 	if (openpty(&master, &pty, ptyname, NULL, NULL) < 0) {
 		perror("cannot open pty - ");
 		return -1;
-	}
+	} */
 
-	printf("tty: %s, pty: %d\n", ptyname, pty);
-	if ((child = fork()) == 0) {
+	child = forkpty(&master, NULL, NULL, NULL);
+    struct termios tio_new;
+	tcgetattr(0, &tio_new);
+	// tio_new=tio_orig;
+	tio_new.c_lflag &= ~(ECHO | ICANON); /* Clear ICANON and ECHO. */
+	// tio_new.c_cc[VMIN] = 1;
+	// tio_new.c_cc[VTIME] = 0;
+	tcsetattr(master, TCSANOW,&tio_new);
+	//tio_new.c_iflag = TTYDEF_IFLAG;
+	//tio_new.c_oflag = TTYDEF_OFLAG;
+	//tio_new.c_lflag = TTYDEF_LFLAG;
+	tcsetattr(master, TCSAFLUSH, &tio_new);
+// printf("tty: %s, pty: %d\n", ptyname, pty);
+	// child = fork();
+	if (child == 0) {
+	
+		/*
+		close(master);
+		ioctl(pty, TIOCSCTTY, 0);
 		if (dup2(pty, STDIN_FILENO) == -1) {
 			perror("attach pty failed - ");
 			return -1;
@@ -86,36 +106,52 @@ int main(int argc, int argv[])
 			perror("attach pty failed - ");
 			return -1;
 		}
-
+		*/
 		//system("readlink /proc/self/fd/0");
 		//system("readlink /proc/self/fd/1");
 		//system("readlink /proc/self/fd/2");
-
+		
 		execv("/bin/bash", args);
 	} else {
+		// close(pty);
 		while(1) {
 			FD_ZERO(&rdset);
 			FD_SET(0, &rdset);
 			FD_SET(master, &rdset);
-			int n = select( master + 1, &rdset, NULL, NULL, NULL);
+
+			FD_ZERO(&erset);
+			FD_SET(0, &erset);
+			FD_SET(master, &erset);
+
+			int n = select( master + 1, &rdset, NULL, &erset, NULL);
 			if (n <= 0)
 				break;
 			if (FD_ISSET (master, &rdset)) {
 				rr = read(master, buf, sizeof(buf));
-				if (rr <= 0)
+				if (rr <= 0) {
+					// perror("");
 					break;
-				printf(buf);
+				}
+				write(0, buf, rr);
 				memset(buf, 0, sizeof(buf));
 			}
 
 			if (FD_ISSET(0, &rdset)) {
 				rr = read(0, buf, sizeof(buf));
-				if (rr <= 0)
+				if (rr <= 0) {
+					// perror("");
 					break;
+				}
 				write(master, buf, rr);
 				memset(buf, 0, sizeof(buf));
 			}
-			// wait(&status);
+
+			if (FD_ISSET (master, &erset) || FD_ISSET(0, &erset)) {
+				// printf("error");
+				break;
+			}
+
+		// wait(&status);
 		}
 	}
 
