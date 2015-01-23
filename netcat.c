@@ -1813,8 +1813,8 @@ int nc_main (argc, argv)
 	USHORT curport = 0;
 	char * randports = NULL;
 	int cycle = 0;
+	int o_noint = 0;
 
-	signal(SIGINT, sigint_handler);
 #ifdef WIN32
 	atexit(__w32_shutdown);
 	w32_stdout = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -1918,7 +1918,7 @@ recycle:
 
 	/* If your shitbox doesn't have getopt, step into the nineties already. */
 	/* optarg, optind = next-argv-component [i.e. flag arg]; optopt = last-char */
-	while ((x = getopt (argc, argv, "ab:Bde:g:G:hi:klLno:p:rs:tuvw:zx")) != EOF) {
+	while ((x = getopt (argc, argv, "ab:Bde:g:G:hi:klLnNo:p:rs:tuvw:zx")) != EOF) {
 		/* Debug (("in go: x now %c, optarg %x optind %d", x, optarg, optind)); */
 		switch (x) {
 		case 'a':
@@ -2003,6 +2003,9 @@ recycle:
 			o_listen++; break;
 		case 'n':				/* numeric-only, no DNS lookups */
 			o_nflag++; break;
+		case 'N':
+			o_noint = 1;
+			break;
 		case 'o':				/* hexdump log */
 			stage = (unsigned char *) optarg;
 			o_wfile++; break;
@@ -2049,6 +2052,10 @@ recycle:
 		} /* switch x */
 	} /* while getopt */
 
+	if (o_noint)
+		signal(SIGINT, sigint_handler);
+	else
+		signal(SIGINT, SIG_DFL);
 	/* other misc initialization */
 #ifndef WIN32  /* Win32 doesn't like to mix file handles and sockets */
 	Debug (("fd_set size %d", sizeof (*ding1)));	/* how big *is* it? */
