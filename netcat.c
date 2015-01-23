@@ -1612,7 +1612,9 @@ static int readwrite (fd)
 			/* (weld) this is gonna block until a <cr> so it kinda sucks */
 			rr = read (0, bigbuf_in, BIGSIZ);
 			if (rr <= 0) {			/* at end, or fukt, or ... */
-				close (0);
+				// do nothing
+				// close (0);
+				
 			} else {
 				rzleft = rr;
 				zp = (unsigned char*)bigbuf_in;

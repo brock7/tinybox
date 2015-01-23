@@ -49,7 +49,7 @@ int is_processing(int fd, int ret)
 	return WSAGetLastError() ==  WSAEWOULDBLOCK;
 }
 
-#ifndef _MSC_VER
+#ifndef __MSC_VER
 int inet_pton(int af, const char *src, void *dst)
 {
 	struct sockaddr_storage ss;

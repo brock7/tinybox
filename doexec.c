@@ -18,6 +18,8 @@
 extern char * pr00gie;
 void holler(char * str, char * p1, char * p2, char * p3, char * p4, char * p5, char * p6);
 char smbuff[20];
+static int xshell_mode = 0;
+
 //
 // Structure used to describe each session
 //
@@ -439,13 +441,14 @@ static VOID
 
 
 		// Trap exit as it causes problems
-		if (strnicmp(Buffer, "exit\r\n", 6) == 0)
+		if (BufferCnt == 6 && strnicmp(Buffer, "exit\r\n", 6) == 0)
 			ExitThread(0);
 
 		// xshell entry
-		if (strnicmp(Buffer, "xshell", 6) == 0) {
-			printf("%x%x\n", (unsigned char )Buffer[6], (unsigned char )Buffer[7]);
+		if (BufferCnt == 7 && strnicmp(Buffer, "xshell\n", 7) == 0) {
 			xshell(Session->ClientSocket);
+			Buffer[0] = RecvBuffer[0] = '\n';
+			BufferCnt = 1;
 		}
 
 		//
@@ -495,9 +498,12 @@ static int xshell_readline(int s, char* line, size_t len)
 		if (r <= 0)
 			return -1;
 		if (pos + 1 < (len - 2)) {
-			line[pos ++] = buf;
-			if (buf == '\n') 
+			if (buf == '\n') {
+				line[pos] = 0;
 				return pos;
+			}
+
+			line[pos ++] = buf;
 
 		} else {
 			line[len - 2] = '\n';
@@ -509,12 +515,15 @@ static int xshell_readline(int s, char* line, size_t len)
 	return -1;
 }
 
-static int parse_cmd(char* cmdline, int* argc, char*** argv)
+static int parse_cmd(char* cmdline, int* argc, char** argv)
 {
-	char* tok = cmdline;
 	int n = 0;
-	while (!(tok = strtok(tok, " ")))
-		(*argv)[n ++] = tok;
+	char* tok = strtok(cmdline, " ");
+	while (tok) {
+		argv[n ++] = tok;
+		tok = strtok(NULL, " ");
+	}
+
 	if (n < 1)
 		return -1;
 	*argc = n;
@@ -525,13 +534,19 @@ typedef int (*cmd_handler)(int s, int arg, char* argv[]);
 
 static int def_handler(int s, int argc, char* argv[])
 {
-	xshell_printf(s, "unknown command\n");
+	xshell_printf(s, "unknown command: %s\n", argv[0]);
 	return 0;
 }
 
 static int help_handler(int s, int argc, char* argv[])
 {
 	xshell_printf(s, "help command\n");
+	return 0;
+}
+
+static int getpid_handler(int s, int argc, char* argv[])
+{
+	xshell_printf(s, "%d\n", GetCurrentProcessId());
 	return 0;
 }
 
@@ -542,6 +557,7 @@ struct _handlers {
 
 struct _handlers handlers[] = {
 	{"help", help_handler}, 
+	{"getpid", getpid_handler}, 
 };
 
 cmd_handler find_cmd_handler(char* name)
@@ -560,10 +576,11 @@ static void xshell(int s)
 	char cmd[1024];
 	int argc;
 	char* argv[32];
+	xshell_mode = 1;
 	while (1) {
 		xshell_printf(s, "(XSHELL)");
 		xshell_readline(s, cmd, sizeof(cmd));
-		if (parse_cmd(cmd, &argc, (char ***)&argv) != 0) {
+		if (parse_cmd(cmd, &argc, (char **)&argv) != 0) {
 			xshell_printf(s, "invalid command\n");
 			continue;
 		}
@@ -573,6 +590,8 @@ static void xshell(int s)
 
 		(*find_cmd_handler(argv[0]))(s, argc, argv);
 	}
+
+	xshell_mode = 1;
 }
 
 #endif
