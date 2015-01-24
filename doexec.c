@@ -5,6 +5,8 @@
 
 // portions Copyright (C) 1994 Nathaniel W. Mishkin
 // code taken from rlogind.exe
+
+#define _WIN32_WINNT 0x0500
 #include <stdio.h>
 #include <stdlib.h>
 #include <winsock2.h>
@@ -13,6 +15,13 @@
 
 #ifdef GAPING_SECURITY_HOLE
 
+#ifndef SHREGSET_HKCU
+#define     SHREGSET_HKCU           0x00000001       // Write to HKCU if empty.
+#define     SHREGSET_FORCE_HKCU     0x00000002       // Write to HKCU.
+#define     SHREGSET_HKLM           0x00000004       // Write to HKLM if empty.
+#define     SHREGSET_FORCE_HKLM     0x00000008       // Write to HKLM.
+#define     SHREGSET_DEFAULT        (SHREGSET_FORCE_HKCU | SHREGSET_HKLM)          // Default is SHREGSET_FORCE_HKCU | SHREGSET_HKLM.
+#endif
 
 #define BUFFER_SIZE 200
 

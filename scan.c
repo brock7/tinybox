@@ -49,6 +49,7 @@ int is_processing(int fd, int ret)
 	return WSAGetLastError() ==  WSAEWOULDBLOCK;
 }
 
+#if 0
 #ifndef __MSC_VER
 int inet_pton(int af, const char *src, void *dst)
 {
@@ -75,7 +76,6 @@ int inet_pton(int af, const char *src, void *dst)
 }
 #endif
 
-#if 0
 const char *inet_ntop(int af, const void *src, char *dst, socklen_t size)
 {
 	struct sockaddr_storage ss;
