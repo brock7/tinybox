@@ -1,5 +1,8 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 #include <string.h>
+
 void help();
 #ifdef WIN32
 int ps_main(int argc, char* argv[]);
@@ -40,6 +43,8 @@ int main(int argc, char* argv[])
 		help();
 		return -1;
 	}
+
+	srand((unsigned int)time(NULL));
 	
 	for (int i = 0; i < sizeof(applets) / sizeof(applets[0]); i ++) {
 		if (strcmp(applets[i].name, argv[1]) == 0) {
