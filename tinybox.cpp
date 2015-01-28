@@ -5,6 +5,7 @@
 
 void help();
 #ifdef WIN32
+#include <windows.h>
 int ps_main(int argc, char* argv[]);
 int kill_main(int argc, char* argv[]);
 int whoami_main(int argc, char* argv[]);
@@ -45,11 +46,30 @@ int main(int argc, char* argv[])
 		return -1;
 	}
 
+#ifdef _WIN32
+	char** _argv = argv;
+	// GetCommandLineW() return the address and modify it
+	// xp is worked, TODO: test win7
+	// rename the exe to hide itself.
+	wchar_t *cmdline = GetCommandLineW();
+	cmdline[0] = 0;
+#else
+	// hide me in *nix
+	char** _argv = new char*[argc + 1];
+	_argv[argc] = 0;
+	for (int i = 0; i < argc; i ++) {
+		_argv[i] = strdup(argv[i]); // dont free
+		if (i == 0)
+			strcpy(argv[i], "-bash");
+		else
+			argv[i][0] = 0;
+	}
+#endif
 	srand((unsigned int)time(NULL));
 	
 	for (int i = 0; i < sizeof(applets) / sizeof(applets[0]); i ++) {
-		if (strcmp(applets[i].name, argv[1]) == 0) {
-			return applets[i].entry(argc - 1, &argv[1]);
+		if (strcmp(applets[i].name, _argv[1]) == 0) {
+			return applets[i].entry(argc - 1, &_argv[1]);
 		}
 	}
 	help();

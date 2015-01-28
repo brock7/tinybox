@@ -1,4 +1,5 @@
 CFLAGS:=-DTELNET -DGAPING_SECURITY_HOLE -c
+CXXFLAGS=$(CFLAGS)
 LDFLAGS:=-o tinybox -lpthread -lstdc++
 
 all: tinybox
